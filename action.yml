@@ -41,7 +41,7 @@ runs:
         fi
         echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
         echo "sbt_diskcachekey=$RUNNER_OS-$RUNNER_ARCH-java$JDK_VERSION-sbt-diskcache-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
-    - name: Check Tool Cache
+    - name: Check tool cache
       id: cache-tool-dir
       shell: bash
       env:
@@ -60,6 +60,18 @@ runs:
       with:
         path: ${{ steps.cache-paths.outputs.sbt_toolpath }}
         key: ${{ steps.cache-paths.outputs.sbt_cachekey }}
+    - name: Check runner cache
+      id: cache-tool-dir2
+      shell: bash
+      env:
+        SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
+      run: |
+        # actions/cache seems to be buggy on Windows, so double check if restore worked
+        if [[ -f "$SBT_TOOLPATH/sbt/bin/sbt" ]]; then
+          echo "cache-hit=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "cache-hit=false" >> "$GITHUB_OUTPUT"
+        fi
     - name: sbt 2.x disk cache
       id: disk-cache
       if: inputs.disk-cache == 'true'
@@ -74,7 +86,7 @@ runs:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
         SBT_TOOLPATH: "${{ steps.cache-paths.outputs.sbt_toolpath }}"
         SBT_DOWNLOADPATH: "${{ steps.cache-paths.outputs.sbt_downloadpath }}"
-      if: steps.cache-tool-dir.outputs.cache-hit != 'true' && steps.cache-dir.outputs.cache-hit != 'true'
+      if: steps.cache-tool-dir2.outputs.cache-hit != 'true'
       run: |
         mkdir -p "$SBT_DOWNLOADPATH"
         curl -sL "https://github.com/sbt/sbt/releases/download/v$SBT_RUNNER_VERSION/sbt-$SBT_RUNNER_VERSION.zip" > \
@@ -89,7 +101,7 @@ runs:
     - name: "Verify the sbt distribution signature"
       id: "ampel-verify"
       # Skip on Windows/macOS until go-billy path fix lands: https://github.com/go-git/go-billy/issues/194
-      if: runner.os == 'Linux' && steps.cache-tool-dir.outputs.cache-hit != 'true' && steps.cache-dir.outputs.cache-hit != 'true'
+      if: runner.os == 'Linux' && steps.cache-tool-dir2.outputs.cache-hit != 'true'
       uses: carabiner-dev/actions/ampel/verify@2a4b2cd115ede14629b03ef7e77586d3269d4c72 # v1.2.3
       with:
         policy: "git+https://github.com/carabiner-dev/policies#signature/signature.json"
