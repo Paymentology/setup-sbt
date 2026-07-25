@@ -17,7 +17,7 @@ runs:
       shell: bash
       env:
         SBT_RUNNER_VERSION: ${{ inputs.sbt-runner-version }}
-        SBT_CACHE_KEY_VERSION: 1.5.2
+        SBT_CACHE_KEY_VERSION: 1.5.3
       run: |
         JDK_VERSION=0
         if [[ -x "$(command -v java)" ]]; then
@@ -39,8 +39,8 @@ runs:
           echo "sbt_diskcache=$HOME/.cache/sbt" >> "$GITHUB_OUTPUT"
           echo "sbt_monday=$(date -d "last Monday" +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
         fi
-        echo "sbt_cachekey=$RUNNER_OS-sbt-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
-        echo "sbt_diskcachekey=$RUNNER_OS-java$JDK_VERSION-sbt-diskcache-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "sbt_cachekey=$RUNNER_OS-$RUNNER_ARCH-sbt-runner-$SBT_RUNNER_VERSION-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
+        echo "sbt_diskcachekey=$RUNNER_OS-$RUNNER_ARCH-java$JDK_VERSION-sbt-diskcache-$SBT_CACHE_KEY_VERSION" >> "$GITHUB_OUTPUT"
     - name: Check Tool Cache
       id: cache-tool-dir
       shell: bash
